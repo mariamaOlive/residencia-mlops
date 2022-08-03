@@ -113,6 +113,8 @@ def add_features(df_train): #, df_val
     df_train[coluna] = 0
     #df_val[coluna] = 0
 
+
+
     ### Tratamento de variaveis continuas
     normalize = MinMaxScaler()
     
@@ -124,7 +126,11 @@ def add_features(df_train): #, df_val
     ### Dropar colunas e separar X e Y
     colunas_drop = ["class", "education", "workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
 
-    X_train = df_train.drop(colunas_drop, axis = 1).to_numpy()
+    X_train = df_train.drop(colunas_drop, axis = 1)
+    
+    #X_train[:1].to_csv("./Dados/colunas.csv", index = False)
+        
+    X_train = X_train.to_numpy()
     y_train = df_train["class"].values
     #X_val = df_valid.drop(colunas_drop, axis = 1).to_numpy()
     #y_val = df_valid["class"].values
