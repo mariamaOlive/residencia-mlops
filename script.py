@@ -39,6 +39,7 @@ from datetime import datetime
 #########################################################################################
 NOME_COLUNAS = ('age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'class')
 MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+EXPERIMENT_NAME = "census-experiment"
 SEED = 42
 
 
@@ -46,10 +47,10 @@ SEED = 42
 #########################################################################################
 def tratamento_faltantes(df):
     ## Printa os atributos com dados faltantes (" ?")
-    for coluna in NOME_COLUNAS:
+    '''for coluna in NOME_COLUNAS:
         if len(df[df[coluna] == " ?"]) > 0:
             print(coluna)
-            print(len(df[df[coluna] == " ?"]))
+            print(len(df[df[coluna] == " ?"]))'''
     
     ## Tratamento dos dados faltantes:
     atr_faltantes = ["workclass", "occupation", "native-country"]
@@ -200,20 +201,20 @@ def train_best_model(X_train, y_train, X_test, y_test, best_params):
         accuracy = accuracy_score(y_test, y_pred)
 
         mlflow.log_metric("acuracia", accuracy)
-
+        mlflow.set_tag("melhor_modelo", "melhor")
+        mlflow.set_tag("modelo", "random_forest")
         mlflow.sklearn.log_model(clf, "modelo-random-forest")       
-
 
 
 #########################################################################################
 #########################################################################################
 @task
-def model_regitry():
+def model_regitry(experiment_id):
     
     client = MlflowClient(tracking_uri = MLFLOW_TRACKING_URI)
     
     runs = client.search_runs(
-                              experiment_ids = '1',
+                              experiment_ids = experiment_id,
                               filter_string = "tags.melhor_modelo = 'melhor'",
                               run_view_type = ViewType.ACTIVE_ONLY,
                               max_results = 5
@@ -260,10 +261,14 @@ def model_regitry():
 #########################################################################################
 #########################################################################################
 @flow(task_runner=SequentialTaskRunner())
-def main(train_path ="Dados/adult.data", test_path ="Dados/adult.test"):
+def main(train_path = "./Dados/adult.data", test_path = "./Dados/adult.test"):
     
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    mlflow.set_experiment("census-experiment")
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    #experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
+    mlflow.set_experiment(EXPERIMENT_NAME)
+
+    current_experiment = dict(mlflow.get_experiment_by_name(EXPERIMENT_NAME))
+    experiment_id = current_experiment['experiment_id']
     
     df_train = read_dataframe(train_path)
     df_test = read_dataframe(test_path, 1)
@@ -274,7 +279,7 @@ def main(train_path ="Dados/adult.data", test_path ="Dados/adult.test"):
     best_params = train_model_search(X_train, y_train)
     train_best_model(X_train, y_train, X_test, y_test, best_params)
 
-    model_regitry()
+    model_regitry(experiment_id)
 
 
 print("antes")
