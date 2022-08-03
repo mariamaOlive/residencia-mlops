@@ -53,12 +53,12 @@ def tratamento_faltantes(df):
         df[atr] = df[atr].replace(" ?", np.nan)
         df[atr] = df[atr].interpolate(method = 'pad')
 
+    return df
+
 
 def formatar_entrada(colunas_treino, X_test):
 
-    df = pd.concat([colunas_treino, X_test], axis = 0, ignore_index = True)#.head(1)
-
-    df = df.drop(labels = 0, axis = 0)
+    df = pd.concat([colunas_treino, X_test], axis = 0, ignore_index = True)
 
     colunas_classes = ["workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
 
@@ -72,18 +72,18 @@ def formatar_entrada(colunas_treino, X_test):
     return df
 
 
-def prepare_features(X_test):
+def prepare_features(dic_test):
 
-    X_test = pd.json_normalize(X_test)
+    df_test = pd.json_normalize(dic_test)
 
     # Trata os dados faltantes -> "?"
-    tratamento_faltantes(X_test)
+    df_test = tratamento_faltantes(df_test)
 
     # Lê o arquivo com o nome das colunas geradas no dataset de treino
     colunas_treino = pd.read_csv("./Dados/colunas.csv")
 
     # Formata o teste para as colunas ficarem iguais ao dataset de treino
-    formatar_entrada(colunas_treino, X_test)
+    X_test = formatar_entrada(colunas_treino, df_test)
 
     ### Tratamento de variaveis continuas
     colunas = ["age", "fnlwgt", "capital-gain", "capital-loss", "hours-per-week", "education-num"]
@@ -104,7 +104,7 @@ def prepare_features(X_test):
 #########################################################################################
 def predict(features):
     preds = model.predict(features)
-    return preds[0]
+    return int(preds[0])
 
 
 app = Flask('duration-prediction')
@@ -121,6 +121,8 @@ def predict_endpoint():
     result = {
         'class': pred
     }
+
+    print("\n\n{pred}\n\n")
 
     return jsonify(result)
 

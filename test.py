@@ -3,7 +3,7 @@
 
 import requests
 
-adult = {
+'''adult = {
     "age": 25,
     "workclass": " Private",
     "fnlwgt": 226802,
@@ -18,7 +18,25 @@ adult = {
     "capital-loss": 0,
     "hours-per-week": 40,
     "native-country": " United-States"
+}'''
+
+adult = {
+    "age": 41,
+    "workclass": " Private",
+    "fnlwgt": 289551,
+    "education": " HS-grad",
+    "education-num": 9,
+    "marital-status": " Married-civ-spouse",
+    "occupation": " Handlers-cleaners",
+    "relationship": " Husband",
+    "race": " White",
+    "sex": " Male",
+    "capital-gain": 7688,
+    "capital-loss": 0,
+    "hours-per-week": 40,
+    "native-country": " United-States"
 }
+
 
 url = 'http://localhost:9696/predict'
 response = requests.post(url, json=adult)

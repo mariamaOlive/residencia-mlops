@@ -28,11 +28,17 @@ import mlflow
 from prefect import flow, task
 from prefect.task_runners import SequentialTaskRunner
 
+from mlflow.tracking import MlflowClient
+from mlflow.entities import ViewType
+
+from datetime import datetime
+
 
 #########################################################################################
 # Constantes																			#
 #########################################################################################
 NOME_COLUNAS = ('age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'class')
+MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
 SEED = 42
 
 
@@ -167,7 +173,7 @@ def train_model_search(X_train, y_train):
                        fn = objective,
                        space = search_space,
                        algo = tpe.suggest,
-                       max_evals = 2,
+                       max_evals = 20,
                        trials = Trials()
                       )
 
@@ -198,6 +204,59 @@ def train_best_model(X_train, y_train, X_test, y_test, best_params):
         mlflow.sklearn.log_model(clf, "modelo-random-forest")       
 
 
+
+#########################################################################################
+#########################################################################################
+@task
+def model_regitry():
+    
+    client = MlflowClient(tracking_uri = MLFLOW_TRACKING_URI)
+    
+    runs = client.search_runs(
+                              experiment_ids = '1',
+                              filter_string = "tags.melhor_modelo = 'melhor'",
+                              run_view_type = ViewType.ACTIVE_ONLY,
+                              max_results = 5
+                             )
+
+    for run in runs:
+        print(f"\n\nrun id: {run.info.run_id}, acuracia: {run.data.metrics['acuracia']:.4f}\n\n")
+
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+    model_name = "census-classifier"
+
+    run_id = runs[0].info.run_id
+    model_uri = f"runs:/{run_id}/model"
+    mlflow.register_model(model_uri = model_uri, name = model_name)
+
+    latest_versions = client.get_latest_versions(name = model_name)
+
+    versao = 0
+    for version in latest_versions:
+        print(f"\n\nversion: {version.version}, stage: {version.current_stage}\n\n")
+        if versao < version.version:
+            versao = version.version
+
+    model_version = versao
+    #print(f"\n\nVersão: {model_version}\n\n")
+
+    new_stage = "Production"
+    client.transition_model_version_stage(
+                                          name = model_name,
+                                          version = model_version,
+                                          stage = new_stage,
+                                          archive_existing_versions = True
+                                         )
+
+    date = datetime.today().date()    
+    client.update_model_version(
+                                name = model_name,
+                                version = model_version,
+                                description = f"O modelo na versão {model_version} mudou para {new_stage} em {date}"
+                               )
+
+
 #########################################################################################
 #########################################################################################
 @flow(task_runner=SequentialTaskRunner())
@@ -214,6 +273,9 @@ def main(train_path ="Dados/adult.data", test_path ="Dados/adult.test"):
  
     best_params = train_model_search(X_train, y_train)
     train_best_model(X_train, y_train, X_test, y_test, best_params)
+
+    model_regitry()
+
 
 print("antes")
 main()
