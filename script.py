@@ -11,23 +11,16 @@
 #########################################################################################
 # Bibliotecas																			#
 #########################################################################################
-
 import numpy as np
 import pandas as pd
-import pickle
 
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
-
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LinearRegression, Lasso, Ridge
-from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
-from hyperopt.pyll import scope
 from hyperopt import space_eval
 
 import mlflow
@@ -114,12 +107,9 @@ def add_features(df_train): #, df_val
     #df_val[coluna] = 0
 
 
-
     ### Tratamento de variaveis continuas
-    normalize = MinMaxScaler()
-    
     colunas = ["age", "fnlwgt", "capital-gain", "capital-loss", "hours-per-week", "education-num"]
-
+    normalize = MinMaxScaler()
     df_train[colunas] = normalize.fit_transform(df_train[colunas])
     #df_val[colunas] = normalize.fit_transform(df_val[colunas])
 
