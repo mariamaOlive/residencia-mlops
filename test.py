@@ -10,7 +10,7 @@ import requests
     "education": " 11th",
     "education-num": 7,
     "marital-status": " Never-married",
-    "occupation": " Machine-op-inspct",
+    "occupation": " Exec-managerial",
     "relationship": " Own-child",
     "race": " Black",
     "sex": " Male",
@@ -22,18 +22,18 @@ import requests
 
 # Entrada para fazer a predição
 adult = {
-    "age": 41,
+    "age": 50,
     "workclass": " Private",
     "fnlwgt": 289551,
-    "education": " HS-grad",
-    "education-num": 9,
+    "education": " Doctorate",
+    "education-num": 16,
     "marital-status": " Married-civ-spouse",
-    "occupation": " Handlers-cleaners",
+    "occupation": " Exec-managerial",
     "relationship": " Husband",
     "race": " White",
     "sex": " Male",
-    "capital-gain": 7688,
-    "capital-loss": 0,
+    "capital-gain": 55000,
+    "capital-loss": 1000,
     "hours-per-week": 40,
     "native-country": " United-States"
 }

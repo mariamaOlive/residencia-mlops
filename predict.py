@@ -33,7 +33,7 @@ NOME_COLUNAS = ('age', 'workclass', 'fnlwgt', 'education', 'education-num', 'mar
 # Modelo    																			#
 #########################################################################################
 # Carregando o modelo random forest
-logged_model = f'./mlruns/1/e7470dabc0d44c0aa0baf4443c7825ef/artifacts/modelo-random-forest'
+logged_model = f'./mlruns/1/ee1069bf3979424690e52d2d5d9b7915/artifacts/modelo-random-forest'
 model = mlflow.pyfunc.load_model(logged_model)
 
 
@@ -41,7 +41,7 @@ model = mlflow.pyfunc.load_model(logged_model)
 #########################################################################################
 # Função para tratar dados faltantes 
 def tratamento_faltantes(df):
-    ## Printa os atributos com dados faltantes (" ?")
+    ## Print dos atributos com dados faltantes (" ?")
     for coluna in NOME_COLUNAS:
         if len(df[df[coluna] == " ?"]) > 0:
             print(coluna)
@@ -64,7 +64,7 @@ def formatar_entrada(colunas_treino, X_test):
     # Junta o dataset de teste com o nome das colunas do one hot encoder
     df = pd.concat([colunas_treino, X_test], axis = 0, ignore_index = True)
 
-    # Colunas das categoricas
+    # Colunas das freatures categoricas
     colunas_classes = ["workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
 
     # Faz o one hot encoding
@@ -116,18 +116,20 @@ app = Flask('duration-prediction')
 # Faz a predição e retorna a classe
 @app.route('/predict', methods = ['POST'])
 def predict_endpoint():
+
+    # Recebe request em json
     adult = request.get_json()
     print(f"\n\n{adult}\n\n")
 
+    # Prepara as features para predição
     features = prepare_features(adult)
+    # Realiza a predição
     pred = predict(features)
 
+    # Retorna o resultado em formato json
     result = {
         'class': pred
     }
-
-    print("\n\n{pred}\n\n")
-
     return jsonify(result)
 
 
