@@ -105,8 +105,6 @@ def onehot_encoder(df):
 @task
 def add_features(df_train): 
 
-    print(f"\n\nTamanho do treino: {len(df_train)}\n\n")
-
     ### Tratamento de variaveis categoricas
     df_train = onehot_encoder(df_train)
 
