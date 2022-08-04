@@ -68,7 +68,7 @@ def read_dataframe(filename, skip_num = 0):
 
     df = pd.read_csv(filename, names = NOME_COLUNAS, index_col = False, skiprows = skip_num)
 
-    #Fazendo conversão de tipos
+    # Fazendo conversão de tipos
     df['workclass'] = df['workclass'].astype('category')
     df['education'] = df['education'].astype('category')
     df['marital-status'] = df['marital-status'].astype('category')
@@ -263,7 +263,7 @@ def model_regitry(experiment_id, client):
 @flow(task_runner=SequentialTaskRunner())
 def main(train_path = "./Dados/adult.data", test_path = "./Dados/adult.test"):
     
-    #Instanciando e configurando o MLFlow
+    # Instanciando e configurando o MLFlow
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT_NAME)
     
