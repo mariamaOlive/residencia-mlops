@@ -148,7 +148,6 @@ def train_model_search(X_train, y_train):
             accuracy = cross_val_score(clf, X_train, y_train, cv = 5).mean()
 
             mlflow.log_metric("acuracia", accuracy)
-            
             mlflow.sklearn.log_model(clf, "modelo-random-forest") 
         
         return {'loss': -accuracy, 'status': STATUS_OK}                                                     
