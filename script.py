@@ -45,6 +45,7 @@ SEED = 42
 
 #########################################################################################
 #########################################################################################
+# Função para tratar os dados faltantes
 def tratamento_faltantes(df):
     ## Printa os atributos com dados faltantes (" ?")
     '''for coluna in NOME_COLUNAS:
@@ -61,7 +62,7 @@ def tratamento_faltantes(df):
         df[atr] = df[atr].replace(" ?", np.nan)
         df[atr] = df[atr].interpolate(method = 'pad')
 
-
+# Leitura do dataframe
 @task
 def read_dataframe(filename, skip_num = 0):
 
@@ -86,6 +87,7 @@ def read_dataframe(filename, skip_num = 0):
 
 #########################################################################################
 #########################################################################################
+#Função para codificar as colunas categoricas (one hot encoding)
 def onehot_encoder(df):
 
     colunas_cat = ["workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
@@ -98,54 +100,43 @@ def onehot_encoder(df):
     
     return df
 
-
+# Tratamento das features categoricas e continuas
 @task
-def add_features(df_train): #, df_val
+def add_features(df_train): 
 
     print(f"\n\nTamanho do treino: {len(df_train)}\n\n")
-    #print(f"Tamanho do valid: {len(df_val)}")
 
     ### Tratamento de variaveis categoricas
     df_train = onehot_encoder(df_train)
-    #df_val = onehot_encoder(df_val)
 
     coluna = 'native-country_ Holand-Netherlands'
     df_train[coluna] = 0
-    #df_val[coluna] = 0
-
 
     ### Tratamento de variaveis continuas
     colunas = ["age", "fnlwgt", "capital-gain", "capital-loss", "hours-per-week", "education-num"]
     normalize = MinMaxScaler()
     df_train[colunas] = normalize.fit_transform(df_train[colunas])
-    #df_val[colunas] = normalize.fit_transform(df_val[colunas])
 
     ### Dropar colunas e separar X e Y
     colunas_drop = ["class", "education", "workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
 
     X_train = df_train.drop(colunas_drop, axis = 1)
-    
-    #X_train[:1].to_csv("./Dados/colunas.csv", index = False)
-        
     X_train = X_train.to_numpy()
     y_train = df_train["class"].values
-    #X_val = df_valid.drop(colunas_drop, axis = 1).to_numpy()
-    #y_val = df_valid["class"].values
 
     label_encoder = preprocessing.LabelEncoder()
 
     y_train = label_encoder.fit_transform(y_train)
-    #y_val = label_encoder.fit_transform(y_val)
 
     return X_train, y_train
-    #return X_train, X_val, y_train, y_val
 
 
 #########################################################################################
 #########################################################################################
+# Função que faz a busca dos melhores parâmetros
 @task
 def train_model_search(X_train, y_train):
-
+    # Função objetivo
     def objective(params):
     
         with mlflow.start_run():
@@ -158,11 +149,11 @@ def train_model_search(X_train, y_train):
 
             mlflow.log_metric("acuracia", accuracy)
             
-            # Log the model created by this run.
             mlflow.sklearn.log_model(clf, "modelo-random-forest") 
         
         return {'loss': -accuracy, 'status': STATUS_OK}                                                     
 
+    # Espaço de busca
     search_space = {
                     'max_depth': hp.randint('max_depth', 10, 200),
                     'n_estimators': hp.randint('n_estimators', 200, 1000),
@@ -170,6 +161,7 @@ def train_model_search(X_train, y_train):
                     'random_state': SEED
                    }
 
+    # Otimização da função objetivo
     best_result = fmin(
                        fn = objective,
                        space = search_space,
@@ -185,6 +177,7 @@ def train_model_search(X_train, y_train):
 
 #########################################################################################
 #########################################################################################
+# Treina o modelo com os melhores parâmetros encontrados
 @task
 def train_best_model(X_train, y_train, X_test, y_test, best_params):
 
@@ -208,11 +201,13 @@ def train_best_model(X_train, y_train, X_test, y_test, best_params):
 
 #########################################################################################
 #########################################################################################
+# Registro de modelos
 @task
 def model_regitry(experiment_id):
     
     client = MlflowClient(tracking_uri = MLFLOW_TRACKING_URI)
     
+    # Procura por runs com o melhor modelo encontrado, de acordo com a tag
     runs = client.search_runs(
                               experiment_ids = experiment_id,
                               filter_string = "tags.melhor_modelo = 'melhor'",
@@ -240,8 +235,8 @@ def model_regitry(experiment_id):
             versao = version.version
 
     model_version = versao
-    #print(f"\n\nVersão: {model_version}\n\n")
 
+    # Colocando o melhor para produção
     new_stage = "Production"
     client.transition_model_version_stage(
                                           name = model_name,
@@ -250,6 +245,7 @@ def model_regitry(experiment_id):
                                           archive_existing_versions = True
                                          )
 
+    # Atualizando a descrição do modelo
     date = datetime.today().date()    
     client.update_model_version(
                                 name = model_name,
@@ -260,11 +256,11 @@ def model_regitry(experiment_id):
 
 #########################################################################################
 #########################################################################################
+# Pipeline
 @flow(task_runner=SequentialTaskRunner())
 def main(train_path = "./Dados/adult.data", test_path = "./Dados/adult.test"):
     
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    #experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
     mlflow.set_experiment(EXPERIMENT_NAME)
 
     current_experiment = dict(mlflow.get_experiment_by_name(EXPERIMENT_NAME))

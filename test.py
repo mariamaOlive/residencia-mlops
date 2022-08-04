@@ -20,6 +20,7 @@ import requests
     "native-country": " United-States"
 }'''
 
+# Entrada para fazer a predição
 adult = {
     "age": 41,
     "workclass": " Private",
@@ -37,7 +38,7 @@ adult = {
     "native-country": " United-States"
 }
 
-
+# Faz a requisição
 url = 'http://localhost:9696/predict'
 response = requests.post(url, json=adult)
 print()

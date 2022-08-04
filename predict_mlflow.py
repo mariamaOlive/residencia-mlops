@@ -25,18 +25,21 @@ from sklearn import preprocessing
 #########################################################################################
 # Constantes																			#
 #########################################################################################
+# Nome das colunas do dataset
 NOME_COLUNAS = ('age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country')
 
 
 #########################################################################################
 # Modelo    																			#
 #########################################################################################
+# Carregando o modelo random forest
 logged_model = f'./mlruns/1/e7470dabc0d44c0aa0baf4443c7825ef/artifacts/modelo-random-forest'
 model = mlflow.pyfunc.load_model(logged_model)
 
 
 #########################################################################################
 #########################################################################################
+# Função para tratar dados faltantes 
 def tratamento_faltantes(df):
     ## Printa os atributos com dados faltantes (" ?")
     for coluna in NOME_COLUNAS:
@@ -55,23 +58,26 @@ def tratamento_faltantes(df):
 
     return df
 
-
+# Função para colocar a entrada no formato correto
 def formatar_entrada(colunas_treino, X_test):
 
+    # Junta o dataset de teste com o nome das colunas do one hot encoder
     df = pd.concat([colunas_treino, X_test], axis = 0, ignore_index = True)
 
+    # Colunas das categoricas
     colunas_classes = ["workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
 
+    # Faz o one hot encoding
     for coluna in colunas_classes:
         for i in range(0,len(df)):
             value = df[coluna].iloc[i]
-            df[f'{coluna}_{value}'].iloc[i] = 1 #fazer isso so pra linha i, e nao pra toda a coluna
+            df[f'{coluna}_{value}'].iloc[i] = 1
 
     df = df.fillna(0)
 
     return df
 
-
+# Função para preparar as features
 def prepare_features(dic_test):
 
     df_test = pd.json_normalize(dic_test)
@@ -90,11 +96,8 @@ def prepare_features(dic_test):
     normalize = MinMaxScaler()
     X_test[colunas] = normalize.fit_transform(X_test[colunas])
  
-    ### Dropar colunas e separar X e Y
-    #colunas_drop = ["class", "education", "workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
+    ### Dropar colunas que nao serao usadas
     colunas_drop = ["education", "workclass", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
-
-
     X_test = X_test.drop(colunas_drop, axis = 1).to_numpy()
 
     return X_test
@@ -102,14 +105,15 @@ def prepare_features(dic_test):
 
 #########################################################################################
 #########################################################################################
+# Função para realizar a predição
 def predict(features):
     preds = model.predict(features)
     return int(preds[0])
 
-
+# Flask
 app = Flask('duration-prediction')
 
-
+# Faz a predição e retorna a classe
 @app.route('/predict', methods = ['POST'])
 def predict_endpoint():
     adult = request.get_json()
