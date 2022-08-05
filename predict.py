@@ -39,24 +39,6 @@ model = mlflow.pyfunc.load_model(logged_model)
 
 #########################################################################################
 #########################################################################################
-# Função para tratar dados faltantes 
-def tratamento_faltantes(df):
-    ## Print dos atributos com dados faltantes (" ?")
-    for coluna in NOME_COLUNAS:
-        if len(df[df[coluna] == " ?"]) > 0:
-            print(coluna)
-            print(len(df[df[coluna] == " ?"]))
-    
-    ## Tratamento dos dados faltantes:
-    atr_faltantes = ["workclass", "occupation", "native-country"]
-    for atr in atr_faltantes:
-        categorias_atr = df.groupby(atr).sum().index.tolist()
-        label_encoder = preprocessing.LabelEncoder()
-        label_encoder.fit(categorias_atr)
-        df[atr] = df[atr].replace(" ?", np.nan)
-        df[atr] = df[atr].interpolate(method = 'pad')
-
-    return df
 
 # Função para colocar a entrada no formato correto
 def formatar_entrada(colunas_treino, X_test):
@@ -81,9 +63,6 @@ def formatar_entrada(colunas_treino, X_test):
 def prepare_features(dic_test):
 
     df_test = pd.json_normalize(dic_test)
-
-    # Trata os dados faltantes -> "?"
-    df_test = tratamento_faltantes(df_test)
 
     # Lê o arquivo com o nome das colunas geradas no dataset de treino
     colunas_treino = pd.read_csv("./Dados/colunas.csv")
