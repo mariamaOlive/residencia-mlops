@@ -90,7 +90,7 @@ def predict(features):
     return int(preds[0])
 
 # Flask
-app = Flask('duration-prediction')
+app = Flask('income-prediction')
 
 # Faz a predição e retorna a classe
 @app.route('/predict', methods = ['POST'])
